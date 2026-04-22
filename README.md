@@ -1,68 +1,163 @@
-# Securitykit
+# SecurityKit Android SDK 🛡️
 
-This is an Android library project generated from the Templatekit template.
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.9.22-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://developer.android.com/about)
 
-## Structure
+**SecurityKit** is an enterprise-grade security module for Android, designed to provide a "Zero-Trust" persistence layer. It ensures that sensitive data is encrypted using hardware-backed security (via **EncryptionKit**) before it ever touches the disk.
 
-### `library/`
-The main reusable Android library component. This is the artifact that will be consumed by other projects.
+Built with **Clean Architecture**, **Zero-Dependency DI**, and following strict architectural governance.
 
-- **`src/main/java/`**: Main library source code
-- **`src/test/java/`**: Unit tests (JVM)
-- **`src/androidTest/java/`**: Instrumented tests (device/emulator)
-- **`src/main/res/`**: Library resources
-- **`consumer-rules.pro`**: ProGuard rules for library consumers
+---
 
-### `showcase/`
-A demonstration Android application that consumes the library. Use this app to:
+## 🚀 Features
 
-- Test the library API during development
-- Showcase how to use the library
-- Develop and validate features in an integrated environment
-- Run instrumented tests against the library
+- **Zero-Trust Persistence**: All data is encrypted *before* reaching the storage layer (Jetpack DataStore).
+- **Hardware-Backed Security**: Uses AES-GCM (256-bit) via Android Keystore (StrongBox supported).
+- **Clean Architecture**: Strict separation between Public API, Domain logic, and Data implementation.
+- **Zero-Dependency DI**: Internal dependency graph managed without external frameworks (Dagger/Hilt/Koin) for a lightweight SDK footprint.
+- **Strategical Logging**: Integrated with `Loggerkit` for effective flow tracing.
+- **Flexible Configuration**: DSL-based configuration for easy setup.
 
-The showcase app uses the same base package as the library (plus `.showcase`) for seamless integration.
+---
 
-## Building
+## 📦 Installation
 
-### Compile the library
-```bash
-./gradlew :library:assemble
+Add the dependency to your `build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation("es.joshluq.kit:securitykit:1.0.0-SNAPSHOT")
+}
 ```
 
-### Run library tests
-```bash
-./gradlew :library:test
+---
+
+## 🛠️ Quick Start
+
+### 1. Initialize the SDK
+
+Initialize `SecuritykitManager` in your `Application` class:
+
+```kotlin
+val config = SecuritykitConfig.build(context) {
+    storeName = "my_secure_prefs"
+    // Optional: provide a custom encryption provider
+    // encryptionProvider = CustomProvider()
+}
+
+SecuritykitManager.getInstance().initialize(config)
 ```
 
-### Build the showcase app
-```bash
-./gradlew :showcase:assembleDebug
+### 2. Save Secure Data
+
+```kotlin
+val securityKit = SecuritykitManager.getInstance()
+
+lifecycleScope.launch {
+    securityKit.save("user_token", "super-secret-value")
+}
 ```
 
-### Run showcase instrumented tests
-```bash
-./gradlew :showcase:connectedAndroidTest
+### 3. Read Secure Data
+
+```kotlin
+lifecycleScope.launch {
+    securityKit.read("user_token")
+        .onSuccess { value ->
+            println("Decrypted value: $value")
+        }
+        .onFailure { error ->
+            println("Error retrieving data: ${error.message}")
+        }
+}
 ```
 
-## Development Workflow
+---
 
-1. **Add library code** to `library/src/main/java/es/joshluq/securitykit/`
-2. **Write unit tests** in `library/src/test/java/es/joshluq/securitykit/`
-3. **Write instrumented tests** in `library/src/androidTest/java/es/joshluq/securitykit/`
-4. **Integrate the library** in the showcase app at `showcase/src/main/java/es.joshluq.securitykit/showcase/` to validate the consumer experience
-5. **Add showcase tests** in `showcase/src/test/java/es.joshluq.securitykit/showcase/` or `showcase/src/androidTest/java/es.joshluq.securitykit/showcase/`
-6. **Use the showcase app** to develop and test features in a real Android environment
+## 🏗️ Architecture & Governance
 
-**Note:** The package structure is automatically created during template generation. All source files are organized with the correct package structure from the start.
+This SDK follows the governance rules defined in `AGENTS.md` and implements a strict **Clean Architecture** pattern:
 
-This Consumer-Driven pattern ensures your library API is always tested in a realistic consumer context.
+```mermaid
+graph TD
+    subgraph "Public API (Presentation)"
+        Manager[SecuritykitManager]
+        Config[SecuritykitConfig]
+    end
 
-## Configuration
+    subgraph "Domain Layer"
+        SaveUC[SaveSecureDataUseCase]
+        ReadUC[ReadSecureDataUseCase]
+        RepoInt[SecurityRepository Interface]
+    end
 
-This generated project includes a `project-config.properties` file at the project root with overridable values:
+    subgraph "Data Layer"
+        RepoImpl[SecurityRepositoryImpl]
+        EK[EncryptionKit SDK]
+        DS[(Jetpack DataStore)]
+    end
 
-- `catalogVersion` : the version coordinate used by the version catalog (e.g. `es.joshluq.kit.pluginkit:catalog:0.0.1-SNAPSHOT`).
-- `libraryVersion` : the default version for the `:library` artifact (e.g. `1.0.0`).
+    subgraph "Internal DI Graph"
+        Component[SecuritykitComponent]
+    end
 
-Edit `project-config.properties` in the generated project to change these values without modifying build scripts directly.
+    Manager --> Component
+    Component -.-> SaveUC
+    Component -.-> ReadUC
+    Component -.-> RepoImpl
+
+    SaveUC --> RepoInt
+    ReadUC --> RepoInt
+    RepoImpl -- implements --> RepoInt
+
+    RepoImpl --> EK
+    RepoImpl --> DS
+```
+
+- **Public API**: Only `SecuritykitManager` and `SecuritykitConfig` are exposed.
+- **Domain Layer**: Contains the business logic and Use Cases (Single Use Case Pattern).
+- **Data Layer**: Implements the repository pattern using `DataStore` and `EncryptionKit`.
+- **DI**: Managed via `SecuritykitComponent`, ensuring the SDK remains a pure library without requiring parent apps to use specific DI frameworks.
+
+---
+
+## 🔍 Logging
+
+The SDK uses `Loggerkit` for internal tracing. You can see the flow in Logcat:
+
+- `🔍 SecuritykitManager`: General SDK state and API calls.
+- `🔍 SaveSecureDataUseCase`: Domain execution flow.
+- `🔍 SecurityRepositoryImpl`: Data persistence and encryption status.
+
+---
+
+## 🧪 Testing
+
+The SDK includes a testing backdoor for internal component injection, facilitating unit testing with MockK:
+
+```kotlin
+val mockComponent = mockk<SecuritykitComponent>()
+val manager = SecuritykitManager(componentFactory = { mockComponent })
+// Test your logic...
+```
+
+---
+
+## 📄 License
+
+```text
+Copyright 2024 JoshLuq.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
