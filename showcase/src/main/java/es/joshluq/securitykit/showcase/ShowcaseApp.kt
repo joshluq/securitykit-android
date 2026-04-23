@@ -11,9 +11,8 @@ class ShowcaseApp : Application() {
     override fun onCreate() {
         super.onCreate()
         
-        // Initialize SecurityKit using the default EncryptionProvider (EncryptionKit)
-        val config = SecuritykitConfig.build {
-            context = this@ShowcaseApp
+        // Initialize SecurityKit using the DSL with context parameter
+        val config = SecuritykitConfig.build(this) {
             storeName = "showcase_secure_store"
         }
         

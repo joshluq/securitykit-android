@@ -12,7 +12,7 @@ Built with **Clean Architecture**, **Zero-Dependency DI**, and following strict 
 
 ## 🚀 Features
 
-- **Zero-Trust Persistence**: All data is encrypted *before* reaching the storage layer (Jetpack DataStore).
+- **Zero-Trust Persistence**: All data is encrypted *before* reaching the storage layer (SharedPreferences via FoundationKit).
 - **Hardware-Backed Security**: Uses AES-GCM (256-bit) via Android Keystore (StrongBox supported).
 - **Clean Architecture**: Strict separation between Public API, Domain logic, and Data implementation.
 - **Zero-Dependency DI**: Internal dependency graph managed without external frameworks (Dagger/Hilt/Koin) for a lightweight SDK footprint.
@@ -42,8 +42,10 @@ Initialize `SecuritykitManager` in your `Application` class:
 ```kotlin
 val config = SecuritykitConfig.build(context) {
     storeName = "my_secure_prefs"
-    // Optional: provide a custom encryption provider
-    // encryptionProvider = CustomProvider()
+    // Optional: provide custom providers
+    // encryptionProvider = CustomEncryptionProvider()
+    // logger = CustomLogger()
+    // serializerProvider = CustomSerializer()
 }
 
 SecuritykitManager.getInstance().initialize(config)
@@ -95,7 +97,7 @@ graph TD
     subgraph "Data Layer"
         RepoImpl[SecurityRepositoryImpl]
         EK[EncryptionKit SDK]
-        DS[(Jetpack DataStore)]
+        SP[StorageProvider SharedPreferences]
     end
 
     subgraph "Internal DI Graph"
@@ -112,12 +114,12 @@ graph TD
     RepoImpl -- implements --> RepoInt
 
     RepoImpl --> EK
-    RepoImpl --> DS
+    RepoImpl --> SP
 ```
 
 - **Public API**: Only `SecuritykitManager` and `SecuritykitConfig` are exposed.
 - **Domain Layer**: Contains the business logic and Use Cases (Single Use Case Pattern).
-- **Data Layer**: Implements the repository pattern using `DataStore` and `EncryptionKit`.
+- **Data Layer**: Implements the repository pattern using `StorageProvider` (SharedPreferences) and `EncryptionKit`.
 - **DI**: Managed via `SecuritykitComponent`, ensuring the SDK remains a pure library without requiring parent apps to use specific DI frameworks.
 
 ---

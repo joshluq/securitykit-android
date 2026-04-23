@@ -25,5 +25,4 @@ internal class SaveSecureDataUseCase(
     }
 
     data class Input(val key: String, val value: String) : UseCaseInput
-
 }

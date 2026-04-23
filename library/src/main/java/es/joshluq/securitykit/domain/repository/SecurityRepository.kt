@@ -1,7 +1,5 @@
 package es.joshluq.securitykit.domain.repository
 
-import kotlinx.coroutines.flow.Flow
-
 /**
  * Repository interface for secure data operations.
  */
@@ -18,5 +16,5 @@ internal interface SecurityRepository {
      * @param key The key of the data to retrieve.
      * @return A Flow emitting the retrieved value or null if not found.
      */
-    fun read(key: String): Flow<String?>
+    fun read(key: String): String?
 }

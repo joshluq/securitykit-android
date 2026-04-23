@@ -2,7 +2,6 @@ package es.joshluq.securitykit.manager
 
 import es.joshluq.foundationkit.manager.Manager
 import es.joshluq.foundationkit.manager.ManagerBuilder
-import es.joshluq.securitykit.data.defaults.SecuritykitDefaults
 import es.joshluq.securitykit.di.SecuritykitComponent
 import es.joshluq.securitykit.domain.usecase.ReadSecureDataUseCase
 import es.joshluq.securitykit.domain.usecase.SaveSecureDataUseCase
@@ -44,7 +43,10 @@ class SecuritykitManager internal constructor(
      * @param key The identifier for the stored data.
      * @param value The plain text data to be encrypted and stored.
      */
-    suspend fun save(key: String, value: String) {
+    suspend fun save(key: String, value: String): Result<Unit> {
+        if (!isConfigInitialized()) {
+            return Result.failure(Exception("Config not initialized"))
+        }
         component.logger.d(TAG, "Saving data for key: $key")
         val input = SaveSecureDataUseCase.Input(key, value)
         component.saveSecureDataUseCase(input).onSuccess {
@@ -52,15 +54,20 @@ class SecuritykitManager internal constructor(
         }.onFailure {
             component.logger.e(TAG, "Failed to save data for key: $key", it)
         }
+        return Result.success(Unit)
     }
 
     /**
      * Retrieves and decrypts data previously stored securely.
      *
      * @param key The identifier for the data to retrieve.
-     * @return A [Result] containing the decrypted string on success, or a failure if decryption fails or key is not found.
+     * @return A [Result] containing the decrypted string on success, or a failure if decryption
+     * fails or key is not found.
      */
     suspend fun read(key: String): Result<String> {
+        if (!isConfigInitialized()) {
+            return Result.failure(Exception("Config not initialized"))
+        }
         component.logger.d(TAG, "Reading data for key: $key")
         val input = ReadSecureDataUseCase.Input(key)
         return component.readSecureDataUseCase(input).map { it.value }.onSuccess {

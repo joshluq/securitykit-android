@@ -5,7 +5,6 @@ import es.joshluq.foundationkit.usecase.UseCase
 import es.joshluq.foundationkit.usecase.UseCaseInput
 import es.joshluq.foundationkit.usecase.UseCaseOutput
 import es.joshluq.securitykit.domain.repository.SecurityRepository
-import kotlinx.coroutines.flow.first
 
 /**
  * Use case to read secure data.
@@ -21,8 +20,8 @@ internal class ReadSecureDataUseCase(
 
     override suspend fun invoke(input: Input): Result<Output> {
         logger.d(TAG, "Executing read use case for key: ${input.key}")
-        val value = repository.read(input.key).first()
-        
+        val value = repository.read(input.key)
+
         return if (value != null) {
             Result.success(Output(value))
         } else {

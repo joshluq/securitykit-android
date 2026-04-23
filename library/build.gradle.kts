@@ -18,9 +18,6 @@ configure<LibraryExtension> {
 dependencies {
     implementation("es.joshluq.kit:foundationkit:1.1.0-SNAPSHOT")
     implementation("es.joshluq.kit:encryptionkit:1.1.0-SNAPSHOT")
-    
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.2")
 }
 
 pluginkitQuality {
