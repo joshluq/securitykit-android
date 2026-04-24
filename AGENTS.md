@@ -9,8 +9,8 @@ Your goal is to ensure that **Securitykit** remains a robust, lightweight, and h
 All contributions must strictly adhere to these three layers:
 
 - **Public API (Presentation/Facade)**: 
-    - `SecurityManager`: The unique entry point.
-    - `SecurityConfig`: Configuration class for SDK initialization.
+    - `SecuritykitManager`: The unique entry point.
+    - `SecuritykitConfig`: Configuration class for SDK initialization.
 - **Domain (Business Logic)**:
     - **UseCases**: Pure logic classes for single operations.
     - **Repositories (Interfaces)**: Abstractions for data operations.
@@ -43,59 +43,56 @@ Decouple logic from infrastructure.
 - **Domain**: `interface SecurityRepository { ... }`
 - **Data**: `internal class SecurityRepositoryImpl(...) : SecurityRepository { ... }`
 
+### 3.3. Defaults Pattern
+To simplify configuration while maintaining flexibility, use a `Defaults` object to provide standard implementations.
+- **Implementation**: `internal object SecuritykitDefaults { ... }` in the `di` package.
+- **Usage**: The `SecuritykitConfig.Builder` uses these defaults (e.g., `SecuritykitDefaults.encryptionProvider`) if no specific provider is supplied during the build process.
+
 ## 4. Zero-Dependency DI (Internal Dependency Graph)
 **PROHIBITED**: Dagger, Hilt, Koin, or any external DI library.
-**MANDATORY**: Use an `InternalComponent` with `lazy` instantiation.
+**MANDATORY**: Use an internal component (e.g., `SecuritykitComponent`) with `lazy` instantiation.
 
 ```kotlin
-internal class InternalComponent(
-    private val config: SecurityConfig,
-    private val context: Context
+internal class SecuritykitComponent(
+    private val config: SecuritykitConfig
 ) {
     // Lazy singleton instances
-    val encryptionKit: EncryptionKit by lazy { 
-        EncryptionKit.getInstance(config.encryptionSettings) 
-    }
+    val logger: Loggerkit by lazy { config.logger }
     
     val securityRepository: SecurityRepository by lazy {
-        SecurityRepositoryImpl(context, encryptionKit)
+        SecurityRepositoryImpl(
+            encryptionProvider = config.encryptionProvider,
+            storageProvider = storageProvider,
+            logger = logger
+        )
     }
 
     // UseCases
-    val encryptDataUseCase by lazy { EncryptDataUseCase(securityRepository) }
+    val saveSecureDataUseCase by lazy { SaveSecureDataUseCase(securityRepository, logger) }
 }
 ```
 
 ## 5. Testing Backdoors & Stability
-The `SecurityManager` (or main entry point) must allow the injection of the `InternalComponent` via an `internal` constructor to facilitate mocking during Unit Tests.
+The `SecuritykitManager` must allow the injection of a component factory via an `internal` constructor to facilitate mocking during Unit Tests.
 
 ```kotlin
-class SecurityManager private constructor(
-    private val component: InternalComponent
-) {
-    companion object {
-        fun init(config: SecurityConfig, context: Context): SecurityManager {
-            return SecurityManager(InternalComponent(config, context))
-        }
-        
-        @VisibleForTesting
-        internal fun createForTesting(component: InternalComponent): SecurityManager {
-            return SecurityManager(component)
-        }
-    }
+class SecuritykitManager internal constructor(
+    private val componentFactory: (SecuritykitConfig) -> SecuritykitComponent = { SecuritykitComponent(it) }
+) : Manager<SecuritykitConfig>() {
+    // ...
 }
 ```
 
 ## 6. Security & Performance Constraints
 1. **Hardware-Backed Priority**: Always prefer TEE (Trusted Execution Environment) or SE (Secure Element) via `EncryptionKit`.
-2. **Zero-Trust Persistence**: No data should reach `DataStore` without being encrypted through the `EncryptDataUseCase`.
+2. **Zero-Trust Persistence**: No data should reach storage without being encrypted through the `SaveSecureDataUseCase`.
 3. **Non-Blocking I/O**: All storage operations must use Kotlin Coroutines (`Dispatchers.IO`) and `Flow` for reactive data streams.
 
 ## 7. Task Execution Instructions
 When assigned a task:
 1. **Analyze Contracts**: Check if the requirement modifies `FoundationKit` storage contracts.
 2. **Define Domain First**: Create/update the `UseCase` and its `Repository` interface.
-3. **Update Internal Graph**: Register the new dependency in `InternalComponent` using `lazy`.
-4. **Implement Infrastructure**: Write the concrete implementation in the `Data` layer using `EncryptionKit` and `DataStore`.
+3. **Update Internal Graph**: Register the new dependency in `SecuritykitComponent` using `lazy`.
+4. **Implement Infrastructure**: Write the concrete implementation in the `Data` layer using `EncryptionKit` and appropriate storage.
 5. **Validate with Showcase**: Ensure the changes are reflected and tested in the `:showcase` module.
 6. **Documentation**: Every public-facing API must have KDoc.
