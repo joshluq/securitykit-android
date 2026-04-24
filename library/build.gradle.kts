@@ -2,7 +2,6 @@ import com.android.build.api.dsl.LibraryExtension
 
 plugins {
     alias(libs.plugins.pluginkit.android.library)
-    alias(libs.plugins.pluginkit.android.hilt)
     alias(libs.plugins.pluginkit.quality)
     alias(libs.plugins.pluginkit.android.testing)
     alias(libs.plugins.pluginkit.android.publishing)
@@ -16,7 +15,8 @@ configure<LibraryExtension> {
 }
 
 dependencies {
-
+    implementation("es.joshluq.kit:foundationkit:1.1.0")
+    implementation("es.joshluq.kit:encryptionkit:1.1.0")
 }
 
 pluginkitQuality {

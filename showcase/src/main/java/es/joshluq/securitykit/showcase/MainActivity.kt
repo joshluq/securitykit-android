@@ -4,25 +4,28 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import es.joshluq.securitykit.MyLibraryComponent
+import androidx.compose.ui.unit.dp
+import es.joshluq.securitykit.manager.SecuritykitManager
 import es.joshluq.securitykit.showcase.ui.theme.ShowcaseTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        val securityManager = (application as ShowcaseApp).securityManager
+
         setContent {
             ShowcaseTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = MyLibraryComponent.greet("Library"),
+                    SecurityShowcaseScreen(
+                        securityManager = securityManager,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -32,17 +35,77 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = name,
-        modifier = modifier
-    )
-}
+fun SecurityShowcaseScreen(
+    securityManager: SecuritykitManager,
+    modifier: Modifier = Modifier
+) {
+    var key by remember { mutableStateOf("my_secure_key") }
+    var value by remember { mutableStateOf("") }
+    var storedValue by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ShowcaseTheme {
-        Greeting(MyLibraryComponent.greet("Preview"))
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text("SecurityKit Showcase", style = MaterialTheme.typography.headlineMedium)
+
+        OutlinedTextField(
+            value = key,
+            onValueChange = { key = it },
+            label = { Text("Key") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = { value = it },
+            label = { Text("Value to Save") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Button(
+            onClick = {
+                scope.launch {
+                    securityManager.save(key, value)
+                    value = "" // Clear input
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Save Securely")
+        }
+
+        HorizontalDivider()
+
+        Button(
+            onClick = {
+                scope.launch {
+                    securityManager.read(key).onSuccess {
+                        storedValue = it
+                    }.onFailure {
+                        storedValue = "Error: ${it.message}"
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Read Secure Data")
+        }
+
+        if (storedValue != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Stored Value:", style = MaterialTheme.typography.labelLarge)
+                    Text(storedValue ?: "Empty", style = MaterialTheme.typography.bodyLarge)
+                }
+            }
+        }
     }
 }

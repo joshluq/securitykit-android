@@ -20,4 +20,5 @@ configure<ApplicationExtension> {
 
 dependencies {
     implementation(project(":securitykit"))
+    implementation("es.joshluq.kit:foundationkit:1.1.0")
 }
