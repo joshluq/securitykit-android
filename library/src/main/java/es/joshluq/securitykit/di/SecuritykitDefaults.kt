@@ -3,6 +3,7 @@ package es.joshluq.securitykit.di
 import es.joshluq.encryptionkit.domain.model.SecureBytes
 import es.joshluq.encryptionkit.sdk.EncryptionkitConfig
 import es.joshluq.encryptionkit.sdk.EncryptionkitManager
+import es.joshluq.foundationkit.log.LoggerDefaults
 import es.joshluq.foundationkit.log.Loggerkit
 import es.joshluq.foundationkit.provider.EncryptionProvider
 import es.joshluq.foundationkit.provider.SerializerProvider
@@ -18,12 +19,15 @@ internal object SecuritykitDefaults {
     private const val DELIMITER = ":"
     private const val PARTS = 2
     private const val RADIX = 16
+    private const val TAG = "Securitykit"
 
     /**
-     * Default [es.joshluq.foundationkit.log.Loggerkit] instance for the SDK.
+     * Default [Loggerkit] instance for the SDK.
      */
     val logger: Loggerkit by lazy {
-        Loggerkit.Builder().build()
+        Loggerkit.Builder()
+            .setProvider(LoggerDefaults.defaultLogProvider(tagPrefix = TAG))
+            .build()
     }
 
     /**
@@ -75,7 +79,7 @@ internal object SecuritykitDefaults {
 
             override fun decrypt(data: String): String = runBlocking {
                 val parts = data.split(DELIMITER)
-                require(parts.size != 2) { "Invalid encrypted data format. Expected IV:Ciphertext" }
+                require(parts.size == PARTS) { "Invalid encrypted data format. Expected IV:Ciphertext" }
                 val iv = parts[0].fromHex()
                 val ciphertext = parts[1].fromHex()
 

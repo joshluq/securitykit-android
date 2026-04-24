@@ -12,16 +12,16 @@ import es.joshluq.securitykit.di.SecuritykitDefaults
  *
  * @property context Application context for SDK initialization.
  * @property encryptionProvider The provider used for data encryption/decryption.
- * @property logger The logger instance for the SDK.
  * @property serializerProvider The provider for data serialization.
  * @property storeName Optional name for the secure storage.
+ * @property logger The logger instance for the SDK.
  */
 data class SecuritykitConfig(
     val context: Context,
     val encryptionProvider: EncryptionProvider,
-    val logger: Loggerkit,
     val serializerProvider: SerializerProvider,
-    val storeName: String = "security_kit_store"
+    val storeName: String = "security_kit_store",
+    val logger: Loggerkit
 ) : ManagerConfig {
     /**
      * Builder class for [SecuritykitConfig].

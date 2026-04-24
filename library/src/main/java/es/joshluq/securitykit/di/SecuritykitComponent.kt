@@ -11,8 +11,8 @@ import es.joshluq.securitykit.domain.usecase.SaveSecureDataUseCase
 import es.joshluq.securitykit.manager.SecuritykitConfig
 
 /**
- * Internal dependency graph for SecurityKit.
- * Strictly follows the Zero-Dependency DI rule from AGENTS.md.
+ * Internal Dependency Injection component
+ * Following the Internal Dependency Graph pattern.
  */
 internal class SecuritykitComponent(
     private val config: SecuritykitConfig
