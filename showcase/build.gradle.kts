@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.pluginkit.android.application)
     alias(libs.plugins.pluginkit.android.compose)
     alias(libs.plugins.pluginkit.android.hilt)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.pluginkit.quality)
     alias(libs.plugins.pluginkit.android.testing)
 }

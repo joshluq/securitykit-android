@@ -8,13 +8,15 @@ internal interface SecurityRepository {
      * Saves data securely.
      * @param key The key to store the data.
      * @param value The value to be stored.
+     * @param type The class type of the value.
      */
-    suspend fun save(key: String, value: String)
+    suspend fun <T : Any> save(key: String, value: T, type: Class<T>)
 
     /**
      * Reads secure data.
      * @param key The key of the data to retrieve.
-     * @return A Flow emitting the retrieved value or null if not found.
+     * @param type The class type of the value.
+     * @return The retrieved value or null if not found.
      */
-    fun read(key: String): String?
+    suspend fun <T : Any> read(key: String, type: Class<T>): T?
 }

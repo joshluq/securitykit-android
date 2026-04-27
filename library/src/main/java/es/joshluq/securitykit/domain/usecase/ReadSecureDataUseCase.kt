@@ -18,9 +18,10 @@ internal class ReadSecureDataUseCase(
         private const val TAG = "ReadSecureDataUseCase"
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun invoke(input: Input): Result<Output> {
         logger.d(TAG, "Executing read use case for key: ${input.key}")
-        val value = repository.read(input.key)
+        val value = repository.read(input.key, input.type as Class<Any>)
 
         return if (value != null) {
             Result.success(Output(value))
@@ -30,7 +31,7 @@ internal class ReadSecureDataUseCase(
         }
     }
 
-    data class Input(val key: String) : UseCaseInput
+    data class Input(val key: String, val type: Class<out Any>) : UseCaseInput
 
-    data class Output(val value: String) : UseCaseOutput
+    data class Output(val value: Any) : UseCaseOutput
 }

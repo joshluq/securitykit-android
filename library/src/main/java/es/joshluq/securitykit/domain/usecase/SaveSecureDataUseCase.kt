@@ -18,11 +18,12 @@ internal class SaveSecureDataUseCase(
         private const val TAG = "SaveSecureDataUseCase"
     }
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun invoke(input: Input): Result<NoneOutput> {
         logger.d(TAG, "Executing save use case for key: ${input.key}")
-        repository.save(input.key, input.value)
+        repository.save(input.key, input.value, input.type as Class<Any>)
         return Result.success(NoneOutput)
     }
 
-    data class Input(val key: String, val value: String) : UseCaseInput
+    data class Input(val key: String, val value: Any, val type: Class<out Any>) : UseCaseInput
 }

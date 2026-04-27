@@ -8,14 +8,14 @@ import es.joshluq.securitykit.data.repository.SecurityRepositoryImpl
 import es.joshluq.securitykit.domain.repository.SecurityRepository
 import es.joshluq.securitykit.domain.usecase.ReadSecureDataUseCase
 import es.joshluq.securitykit.domain.usecase.SaveSecureDataUseCase
-import es.joshluq.securitykit.manager.SecuritykitConfig
+import es.joshluq.securitykit.sdk.SecurityKitConfig
 
 /**
  * Internal Dependency Injection component
  * Following the Internal Dependency Graph pattern.
  */
-internal class SecuritykitComponent(
-    private val config: SecuritykitConfig
+internal class SecurityKitComponent(
+    private val config: SecurityKitConfig
 ) {
     // Logger
     val logger: Loggerkit by lazy { config.logger }
@@ -32,7 +32,6 @@ internal class SecuritykitComponent(
     // Repository
     val securityRepository: SecurityRepository by lazy {
         SecurityRepositoryImpl(
-            encryptionProvider = config.encryptionProvider,
             storageProvider = storageProvider,
             logger = logger
         )

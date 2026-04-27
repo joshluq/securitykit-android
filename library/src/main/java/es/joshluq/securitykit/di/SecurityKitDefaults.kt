@@ -8,18 +8,20 @@ import es.joshluq.foundationkit.log.Loggerkit
 import es.joshluq.foundationkit.provider.EncryptionProvider
 import es.joshluq.foundationkit.provider.SerializerProvider
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 /**
  * Default implementations and constants for SecurityKit.
  * Strictly follows the 'Defaults' pattern for internal configuration.
  */
-internal object SecuritykitDefaults {
+internal object SecurityKitDefaults {
 
     private const val DEFAULT_ALIAS = "security_kit_default_key"
     private const val DELIMITER = ":"
     private const val PARTS = 2
     private const val RADIX = 16
-    private const val TAG = "Securitykit"
+    private const val TAG = "SecurityKit"
 
     /**
      * Default [Loggerkit] instance for the SDK.
@@ -30,16 +32,29 @@ internal object SecuritykitDefaults {
             .build()
     }
 
+    private val json = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+    }
+
     /**
-     * Default [es.joshluq.foundationkit.provider.SerializerProvider] instance for the SDK.
+     * Default [SerializerProvider] instance for the SDK.
      * Primarily used by storage providers to handle data serialization.
      */
     val serializerProvider: SerializerProvider by lazy {
         object : SerializerProvider {
-            override fun <T : Any> serialize(value: T, type: Class<T>): String = value.toString()
+            override fun <T : Any> serialize(value: T, type: Class<T>): String {
+                val serializer = json.serializersModule.serializer(type)
+                val data = json.encodeToString(serializer, value)
+                return encryptionProvider.encrypt(data)
+            }
 
             @Suppress("UNCHECKED_CAST")
-            override fun <T : Any> deserialize(value: String, type: Class<T>): T = value as T
+            override fun <T : Any> deserialize(value: String, type: Class<T>): T {
+                val serializer = json.serializersModule.serializer(type)
+                val decryptedData = encryptionProvider.decrypt(value)
+                return json.decodeFromString(serializer, decryptedData) as T
+            }
         }
     }
 
@@ -54,7 +69,7 @@ internal object SecuritykitDefaults {
     }
 
     /**
-     * Default [es.joshluq.foundationkit.provider.EncryptionProvider] that delegates encryption and decryption
+     * Default [EncryptionProvider] that delegates encryption and decryption
      * to the EncryptionKit module.
      *
      * It uses a symmetric AES-GCM scheme provided by EncryptionKit and encodes

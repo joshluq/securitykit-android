@@ -9,8 +9,8 @@ Your goal is to ensure that **Securitykit** remains a robust, lightweight, and h
 All contributions must strictly adhere to these three layers:
 
 - **Public API (Presentation/Facade)**: 
-    - `SecuritykitManager`: The unique entry point.
-    - `SecuritykitConfig`: Configuration class for SDK initialization.
+    - `SecurityKit`: The unique entry point.
+    - `SecurityKitConfig`: Configuration class for SDK initialization.
 - **Domain (Business Logic)**:
     - **UseCases**: Pure logic classes for single operations.
     - **Repositories (Interfaces)**: Abstractions for data operations.
@@ -76,9 +76,10 @@ internal class SecuritykitComponent(
 The `SecuritykitManager` must allow the injection of a component factory via an `internal` constructor to facilitate mocking during Unit Tests.
 
 ```kotlin
-class SecuritykitManager internal constructor(
-    private val componentFactory: (SecuritykitConfig) -> SecuritykitComponent = { SecuritykitComponent(it) }
-) : Manager<SecuritykitConfig>() {
+class SecurityKit internal constructor(
+    config: SecurityKitConfig,
+    private val componentFactory: (SecurityKitConfig) -> SecurityKitComponent = { SecurityKitComponent(it) }
+) : Manager<SecurityKitConfig>() {
     // ...
 }
 ```
